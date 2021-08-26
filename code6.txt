@@ -1,0 +1,407 @@
+0:
+	CREATE DATABASE AZ_DB_6;
+
+1:	
+	CREATE TABLE employee(
+		employee_id INT,
+		department_name VARCHAR(30),
+		employment_length INT,
+		start_data DATE,
+		telephone_number VARCHAR(30), 
+		employee_name VARCHAR(30), 
+		manager_id INT,
+		PRIMARY KEY(employee_id)
+	);
+	
+	INSERT INTO employee VALUES(1, 'r1', 2, '2004-3-5', '09351255679', 'toni', 2);
+		
+	CREATE TABLE customer(
+		customer_id INT,
+		customer_name VARCHAR(30),
+		customer_street VARCHAR(30),
+		customer_city VARCHAR(30),
+		banker_id INT,
+		PRIMARY KEY(customer_id),
+		FOREIGN KEY(banker_id) REFERENCES employee(employee_id)
+	);
+	
+	INSERT INTO customer VALUES(1, 'erf', 'loz', 'tehran', 1);
+	
+	CREATE TABLE branch(
+		branch_name VARCHAR(30),
+		branch_city VARCHAR(30),
+		assets INT,
+		PRIMARY KEY(branch_name)
+	);
+	
+	INSERT INTO branch VALUES('T1', 'tehran', 124000);
+
+	CREATE TABLE loan(
+		loan_number INT,
+		amount INT, 
+		loan_branch_name VARCHAR(30),
+		PRIMARY KEY(loan_number),
+		FOREIGN KEY(loan_branch_name) REFERENCES branch(branch_name)
+	);
+	
+	INSERT INTO loan VALUES(1, 120, 'T1');
+	
+	CREATE TABLE borrower(
+		customer_id INT,
+		loan_number INT,
+		PRIMARY KEY(customer_id, loan_number),
+		FOREIGN KEY(customer_id) REFERENCES customer(customer_id),
+		FOREIGN KEY(loan_number) REFERENCES loan(loan_number)
+	);
+	
+	INSERT INTO borrower VALUES(1, 1);
+
+	CREATE TABLE payment(
+		loan_number INT,
+		payment_number INT, 
+		payment_date DATE,
+		payment_amount INT,
+		PRIMARY KEY(loan_number, payment_number),
+		FOREIGN KEY(loan_number) REFERENCES loan(loan_number)
+	);
+	
+	INSERT INTO payment VALUES(1, 1, '2001-4-6', 12);
+	
+	CREATE TABLE account(
+		account_number INT,
+		balance INT, 
+		PRIMARY KEY(account_number)
+	);
+	
+	INSERT INTO account VALUES(1, 112);
+
+	CREATE TABLE depositor(
+		customer_id INT,
+		account_number INT, 
+		access_date DATE,
+		PRIMARY KEY(customer_id, account_number),
+		FOREIGN KEY(customer_id) REFERENCES customer(customer_id),
+		FOREIGN KEY(account_number) REFERENCES account(account_number)
+	);
+	
+	INSERT INTO depositor VALUES(1, 1, '2013-1-5');
+	
+	CREATE TABLE savings_account(
+		account_number INT,
+		interest_rate INT, 
+		PRIMARY KEY(account_number),
+		FOREIGN KEY(account_number) REFERENCES account(account_number)
+	);
+	
+	INSERT INTO savings_account VALUES(1, 3);
+
+	CREATE TABLE checking_account(
+		account_number INT,
+		overdraft_amount INT, 
+		PRIMARY KEY(account_number),
+		FOREIGN KEY(account_number) REFERENCES account(account_number)
+	);
+	
+	INSERT INTO checking_account VALUES(1, 78);
+
+2:
+	2.1:
+		tables:
+			customer(*customer_id, customer_name, customer_street, customer_city, banker_id)
+			loan(*loan_number, amount, loan_branch_name)
+			borrower(*customer_id, *loan_number)
+		
+		insertions:
+			INSERT INTO employee VALUES(1, 'r1', 2, '2004-3-5', '09351255679', 'toni', 2);
+			INSERT INTO employee VALUES(2, 't1', 3, '2014-4-5', '09124542239', 'john', 3);
+			INSERT INTO customer VALUES(1, 'erf', 'loz', 'tehran', 1);
+			INSERT INTO customer VALUES(2, 'ref', 'mak', 'shiraz', 2);
+			
+			INSERT INTO branch VALUES('T1', 'tehran', 124000);
+			INSERT INTO branch VALUES('S1', 'mashhad', 84800);
+			INSERT INTO loan VALUES(1, 120, 'T1');
+			INSERT INTO loan VALUES(2, 670, 'S1');
+			
+			INSERT INTO borrower VALUES(1, 1);
+			INSERT INTO borrower VALUES(2, 2);
+			
+		query:
+			CREATE VIEW v1 AS 
+			SELECT customer.customer_id, customer.customer_name, loan.amount, loan.loan_branch_name
+			FROM customer
+			INNER JOIN borrower ON customer.customer_id=borrower.customer_id
+			INNER JOIN loan ON borrower.loan_number=loan.loan_number;
+	
+	2.2:
+		tables:
+			depositor(*customer_id, *account_number, access_date)
+			savings_account(*account_number, interest_rate)
+
+		insertions:
+			INSERT INTO account VALUES(1, 112);
+			INSERT INTO account VALUES(2, 271);
+			INSERT INTO depositor VALUES(1, 1, '2003-1-5');
+			INSERT INTO depositor VALUES(2, 2, '2020-1-7');
+			
+			INSERT INTO savings_account VALUES(1, 3);
+			INSERT INTO savings_account VALUES(2, 5);
+			
+
+		query:
+			SELECT savings_account.account_number, savings_account.interest_rate
+			FROM savings_account
+			INNER JOIN depositor ON savings_account.account_number=depositor.account_number
+			WHERE depositor.access_date > '2009-1-1';
+	
+	2.3:
+		tables:
+			branch(*branch_name, branch_city, assets)
+			loan(*loan_number, amount, loan_branch_name)
+			payment(*loan_number, *payment_number, payment_date, payment_amount) 
+		
+		insertions:
+			INSERT INTO payment VALUES(1, 1, '2001-4-6', 12);
+			INSERT INTO payment VALUES(2, 2, '2021-1-6', 17);
+		
+		query:
+			SELECT payment.payment_number 
+			FROM payment
+			INNER JOIN loan ON payment.loan_number=loan.loan_number
+			INNER JOIN branch ON loan.loan_branch_name=branch.branch_name
+			WHERE branch.branch_city = 'tehran';
+	
+3:
+	3.1:
+		tables:
+			customer(*customer_id, customer_name, customer_street, customer_city, banker_id)
+			depositor(*customer_id, *account_number, access_date)
+			account(*account_number, balance)
+	
+		insertions:
+			-
+						
+		query:
+			CREATE PROCEDURE proc1
+			@in VARCHAR(30),
+			@out1 INT OUTPUT,
+			@out2 INT OUTPUT
+			AS
+			DECLARE @blnc INT;
+			DECLARE @ac_num INT;
+			SELECT @blnc = account.balance FROM account
+			INNER JOIN depositor ON account.account_number=depositor.account_number
+			INNER JOIN customer ON depositor.customer_id=customer.customer_id
+			WHERE customer.customer_name = @in;
+			SELECT @ac_num = account.account_number FROM account
+			INNER JOIN depositor ON account.account_number=depositor.account_number
+			INNER JOIN customer ON depositor.customer_id=customer.customer_id
+			WHERE customer.customer_name = @in;
+						
+			SET @out1 = @blnc
+			SET @out2 = @ac_num
+
+			DECLARE @f INT;
+			DECLARE @l INT;
+			EXEC proc1 'erf', @f OUTPUT, @l OUTPUT;
+			SELECT @f;
+			SELECT @l;
+			
+		raw:
+			SELECT account.account_number, account.balance
+			FROM account
+			INNER JOIN depositor ON account.account_number=depositor.account_number
+			INNER JOIN customer ON depositor.customer_id=customer.customer_id
+			WHERE customer.customer_name = 'input';
+
+	3.2:
+		tables:
+			loan(*loan_number, amount, loan_branch_name)
+			payment(*loan_number, *payment_number, payment_date, payment_amount) 
+			
+		insertions:
+			-
+		
+		query:
+			CREATE PROCEDURE proc2
+			@in INT,
+			@out VARCHAR(30) OUTPUT
+			AS
+			DECLARE @b_name VARCHAR(30);
+			SELECT @b_name = loan.loan_branch_name FROM loan 
+			INNER JOIN payment ON loan.loan_number=payment.loan_number
+			WHERE payment.payment_number = @in;
+						
+			SET @out = @b_name
+
+
+			DECLARE @f VARCHAR(30);
+			EXEC proc2 1, @f OUTPUT;
+			SELECT @f;
+		
+		raw:
+			SELECT loan.loan_branch_name 
+			FROM loan
+			INNER JOIN payment ON loan.loan_number=payment.loan_number
+			WHERE payment.payment_number  = 'input';
+	
+	3.3:
+		tables:
+			customer(*customer_id, customer_name, customer_street, customer_city, banker_id)
+			
+		insertions:
+			-
+		
+		query:
+			CREATE PROCEDURE proc3
+			@in INT,
+			AS
+			WAITFOR DELAY '00:00:10';  
+			SELECT * FROM customer
+			WHERE customer_id = @in;
+			
+			
+			EXEC proc3 1;
+			
+		raw:
+			SELECT * FROM customer
+			WHERE customer_id = 'input';
+	
+4:
+	4.1:
+		tables:
+			savings_account(*account_number, interest_rate)
+
+		insertions:
+			-
+			
+		query:
+			CREATE FUNCTION func1()
+			RETURNS INT
+			AS
+			BEGIN
+				DECLARE @ac_num INT;
+				SELECT @ac_num = account_number
+				FROM savings_account
+				WHERE interest_rate = 
+				(SELECT MAX(interest_rate) FROM savings_account);
+				RETURN @ac_num;
+			END
+			
+			
+			DECLARE @num INT;
+			EXEC @num = func1;
+			PRINT @num;
+		
+		raw:
+			SELECT account_number
+			FROM savings_account
+			WHERE interest_rate = 
+			(SELECT MAX(interest_rate) FROM savings_account);
+			
+		
+	4.2:
+		tables:
+			employee(*employee_id, department_name, employment_length, start_date, telephone_number, employee_name, manager_id)
+			
+		insertions:
+			-
+			
+		query:
+			CREATE FUNCTION func2(@id INT)
+			RETURNS VARCHAR(30)
+			AS
+			BEGIN
+				DECLARE @dep_name VARCHAR(30);
+				SELECT @dep_name = department_name
+				FROM employee
+				WHERE employee_id = @id;
+				RETURN @dep_name;
+			END
+			
+			
+			DECLARE @dep VARCHAR(30);
+			EXEC @dep = func2 @id=1;
+			PRINT @dep;
+		
+		raw:
+			SELECT department_name
+			FROM employee
+			WHERE employee_id = 'input';
+
+5:
+	5.1:
+		tables:
+			payment(*loan_number, *payment_number, payment_date, payment_amount) 
+			
+		insertions: (create new table)
+		
+			CREATE TABLE payment_log(
+				id INT IDENTITY(1, 1),
+				command_type VARCHAR(30),
+				command_date_time DATETIME,
+				loan_number INT,
+				payment_number INT, 
+				payment_date DATE,
+				payment_amount INT,
+				PRIMARY KEY(id),
+			);
+			
+		
+		query:
+			CREATE TRIGGER trig1
+			ON payment
+			AFTER INSERT, DELETE, UPDATE
+			AS
+			BEGIN
+				DECLARE @cur_date DATETIME;
+				SET @cur_date = GETDATE();
+				
+				DECLARE @command VARCHAR(30);
+				IF EXISTS(SELECT * from inserted) 
+					IF EXISTS(SELECT * from deleted) 
+						SET @command = 'UPDATE';
+					ELSE 
+						SET @command = 'INSERT';
+				ELSE
+					IF EXISTS(SELECT * from deleted)
+						SET @command = 'DELETE';
+				
+				IF @command = 'DELETE'
+					INSERT INTO	payment_log (command_type, command_date_time, loan_number, payment_number, payment_date, payment_amount) 
+					SELECT @command, @cur_date, deleted.loan_number, deleted.payment_number, deleted.payment_date, deleted.payment_amount
+					FROM deleted
+				ELSE
+					INSERT INTO	payment_log (command_type, command_date_time, loan_number, payment_number, payment_date, payment_amount) 
+					SELECT @command, @cur_date, inserted.loan_number, inserted.payment_number, inserted.payment_date, inserted.payment_amount
+					FROM inserted
+			END
+			
+			SELECT * FROM payment_log;
+			INSERT INTO payment VALUES(1, 1, '2001-4-6', 12);
+			DELETE FROM payment WHERE loan_number = 1;
+			UPDATE payment SET payment_amount = 124 WHERE loan_number = 1;
+			SELECT * FROM payment_log;			
+	
+	5.2:
+		tables:
+			branch(*branch_name, branch_city, assets)
+		
+		insertions:
+			INSERT INTO branch VALUES('L1', 'ilam', 88330);
+		
+		query:
+			CREATE TRIGGER trig2
+			ON branch
+			AFTER UPDATE 
+			AS
+			BEGIN
+				IF UPDATE(branch_name)
+					RAISERROR('you can not change branch name', 16, 1);
+					ROLLBACK TRAN
+			END
+			
+			
+			SELECT * FROM branch;
+			UPDATE branch SET branch_name = 'ash' WHERE branch_city='tehran';
+			SELECT * FROM branch;		
+	

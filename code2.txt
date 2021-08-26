@@ -1,0 +1,173 @@
+0:
+	CREATE DATABASE AZ_DB_2;
+
+1:
+	1.1:
+		CREATE TABLE Sailor(
+			sailor_name INT IDENTITY(300, 1),
+			sailor_rank INT,
+			PRIMARY KEY(sailor_name)
+		);
+
+		CREATE TABLE Boat(
+			boat_name VARCHAR(20),
+			boat_color VARCHAR(20),
+			boat_rank int,
+			PRIMARY KEY(boat_name)
+		);
+
+		CREATE TABLE Reserve(
+			sailor_name INT,
+			boat_name VARCHAR(20),
+			week_day VARCHAR(10),
+			PRIMARY KEY(sailor_name, boat_name),
+			FOREIGN KEY(sailor_name) REFERENCES Sailor(sailor_name),
+			FOREIGN KEY(boat_name) REFERENCES Boat(boat_name)
+		);
+
+		DROP TABLE Reserve;
+		DROP TABLE Boat;
+		DROP TABLE Sailor;
+
+
+	1.2:
+		ALTER TABLE Boat
+		ALTER COLUMN boat_color VARCHAR(30);
+			
+		ALTER TABLE Boat
+		ADD CONSTRAINT boat_rank_range CHECK(boat_rank >= 70 AND boat_rank <= 150);
+		
+	
+	1.3:
+		INSERT INTO Sailor VALUES(100);
+		INSERT INTO Sailor VALUES(120);
+		INSERT INTO Sailor VALUES(80);
+		INSERT INTO Sailor VALUES(140);
+
+		INSERT INTO Boat VALUES('ERF', 'red', 77);
+		INSERT INTO Boat VALUES('CR', 'white', 115);
+		INSERT INTO Boat VALUES('MOZ', 'yellow', 99);
+		INSERT INTO Boat VALUES('AK', 'black', 135);
+
+		INSERT INTO Reserve VALUES(301, 'CR', 'Monday');
+		INSERT INTO Reserve VALUES(302, 'ERF', 'Sunday');
+		INSERT INTO Reserve VALUES(300, 'MOZ', 'Saturday');
+		INSERT INTO Reserve VALUES(303, 'AK', 'Friday');
+		
+	
+	1.4:
+		SELECT boat_name
+		FROM Reserve
+		WHERE week_day='Saturday';
+
+		CREATE VIEW v1 AS
+		SELECT Boat.boat_name, Boat.boat_color, Reserve.sailor_name
+		FROM Boat
+		INNER JOIN Reserve ON Boat.boat_name=Reserve.boat_name;
+		
+		SELECT boat_color
+		FROM Boat;
+
+		SELECT boat_name
+		FROM Reserve
+		WHERE week_day='Saturday' OR week_day='Monday';
+		
+		SELECT Boat.boat_color
+		FROM Boat
+		INNER JOIN Reserve ON Boat.boat_name=Reserve.boat_name
+		WHERE Reserve.week_day LIKE 'S%';
+						
+		
+2:
+	2.1:
+		CREATE TABLE Employee(
+			employee_id INT IDENTITY(1, 1),
+			employee_name VARCHAR(50),
+			salary INT,
+			PRIMARY KEY(employee_id)
+		);
+
+		CREATE TABLE Project(
+			project_id INT IDENTITY(1, 1),
+			project_name VARCHAR(50),
+			PRIMARY KEY(project_id)
+		);
+
+		CREATE TABLE EmployeeProject(
+			project_id INT,
+				INT,
+			PRIMARY KEY(project_id, employee_id),
+			FOREIGN KEY(project_id) REFERENCES Project(project_id),
+			FOREIGN KEY(employee_id) REFERENCES Employee(employee_id)
+		);
+		
+	2.2:
+		INSERT INTO Employee VALUES('manager', 178);
+		INSERT INTO Employee VALUES('b', 115);
+		INSERT INTO Employee VALUES('o', 99);
+		INSERT INTO Employee VALUES('c', 45);
+		INSERT INTO Employee VALUES('d', 77);
+		INSERT INTO Employee VALUES('a', 34);
+		INSERT INTO Employee VALUES('e', 54);
+		INSERT INTO Employee VALUES('f', 133);
+		INSERT INTO Employee VALUES('h', 122);
+		INSERT INTO Employee VALUES('i', 98);
+		INSERT INTO Employee VALUES('g', 85);
+		INSERT INTO Employee VALUES('k', 22);
+
+		INSERT INTO Project VALUES('A');
+		INSERT INTO Project VALUES('B');
+		INSERT INTO Project VALUES('C');
+		INSERT INTO Project VALUES('D');
+
+		INSERT INTO EmployeeProject VALUES(1, 1);
+		INSERT INTO EmployeeProject VALUES(1, 2);
+		INSERT INTO EmployeeProject VALUES(1, 3);
+		INSERT INTO EmployeeProject VALUES(2, 4);
+		INSERT INTO EmployeeProject VALUES(2, 5);
+		INSERT INTO EmployeeProject VALUES(2, 6);
+		INSERT INTO EmployeeProject VALUES(2, 7);
+		INSERT INTO EmployeeProject VALUES(2, 2);
+		INSERT INTO EmployeeProject VALUES(3, 6);
+		INSERT INTO EmployeeProject VALUES(3, 8);
+		INSERT INTO EmployeeProject VALUES(4, 1);
+		INSERT INTO EmployeeProject VALUES(4, 8);
+		INSERT INTO EmployeeProject VALUES(4, 9);
+		INSERT INTO EmployeeProject VALUES(4, 10);
+		INSERT INTO EmployeeProject VALUES(4, 11);
+		INSERT INTO EmployeeProject VALUES(4, 12);
+
+	2.3:
+		SELECT Project.project_name, COUNT(Project.project_name)
+		FROM Project 
+		INNER JOIN EmployeeProject ON Project.project_id=EmployeeProject.project_id
+		GROUP BY Project.project_name
+		HAVING COUNT(Project.project_name) < 4;
+		
+		SELECT Employee.employee_name, Project.project_name
+		FROM EmployeeProject
+		INNER JOIN Employee ON EmployeeProject.employee_id=Employee.employee_id
+		INNER JOIN Project ON EmployeeProject.project_id=Project.project_id
+		ORDER BY Employee.employee_name;
+		
+		SELECT Project.project_name, SUM(Employee.salary)
+		FROM EmployeeProject
+		INNER JOIN Employee ON EmployeeProject.employee_iD=Employee.employee_id
+		INNER JOIN Project ON EmployeeProject.project_id=Project.project_id
+		GROUP BY Project.project_name
+		HAVING Project.project_name='B';
+		
+		SELECT Project.project_name, AVG(Employee.salary)
+		FROM EmployeeProject
+		INNER JOIN Employee ON EmployeeProject.employee_iD=Employee.employee_id
+		INNER JOIN Project ON EmployeeProject.project_id=Project.project_id
+		GROUP BY Project.project_name
+		
+		SELECT Project.project_name
+		FROM EmployeeProject
+		INNER JOIN Employee ON EmployeeProject.employee_id=Employee.employee_id
+		INNER JOIN Project ON EmployeeProject.project_id=Project.project_id
+		WHERE Employee.employee_name='manager';
+		
+		
+		

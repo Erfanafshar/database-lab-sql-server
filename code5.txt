@@ -1,0 +1,121 @@
+0:
+	CREATE DATABASE AZ_DB_5;
+
+1:
+	1.0:
+		CREATE TABLE Book(
+			ID INT IDENTITY(1, 1),
+			Bookname VARCHAR(30),
+			yearpublish INT,
+			authorname VARCHAR(40),
+			QTY INT, 
+			PRIMARY KEY(ID)
+		);
+	
+	1.1:
+		CREATE TRIGGER t1
+				ON Book
+		INSTEAD OF INSERT
+		AS
+		BEGIN
+			print 'No change was done';
+		END
+
+		SELECT * FROM Book;
+		INSERT INTO Book VALUES('ph2', 1999, 'erf', 1234);
+		SELECT * FROM Book;
+		
+		DISABLE TRIGGER t1 ON Book;
+	
+	1.2:
+		CREATE TABLE Book_Audit(
+			ID INT,
+			Bookname VARCHAR(30),
+			yearpublish INT,
+			authorname VARCHAR(40),
+			QTY INT, 
+			Ins_or_del INT,
+			PRIMARY KEY(ID)
+		);
+
+
+		CREATE TRIGGER t2
+		ON Book
+		AFTER INSERT, DELETE
+		AS
+		BEGIN
+			IF EXISTS(SELECT * from inserted) 
+				INSERT INTO	Book_Audit (ID, Bookname, yearpublish, authorname, QTY, Ins_or_del) 
+				SELECT inserted.ID, inserted.Bookname, inserted.yearpublish, inserted.authorname, inserted.QTY, 1 
+				FROM inserted
+			IF EXISTS(SELECT * from deleted) 
+				INSERT INTO	Book_Audit (ID, Bookname, yearpublish, authorname, QTY, Ins_or_del) 
+				SELECT deleted.ID, deleted.Bookname, deleted.yearpublish, deleted.authorname, deleted.QTY, 0
+				FROM deleted
+		END
+		
+		
+		DISABLE TRIGGER t2 ON Book;
+		INSERT INTO Book VALUES('prog', 2020, 'ila', 1245);
+		ENABLE TRIGGER t2 ON Book;
+
+		
+		SELECT * FROM Book_Audit;
+		INSERT INTO Book VALUES('ph2', 1999, 'erf', 4321);
+		SELECT * FROM Book_Audit;
+		DELETE FROM Book WHERE ID = 1;
+		SELECT * FROM Book_Audit;
+
+	1.3:
+		CREATE TRIGGER t3
+		ON Book
+		AFTER UPDATE 
+		AS
+		BEGIN
+			IF UPDATE(Bookname)
+				RAISERROR('you can not change book name', 16, 1);
+				ROLLBACK TRAN
+		END
+		
+		
+		SELECT * FROM Book;
+		UPDATE Book SET Bookname = 'zom' WHERE ID = 2;
+		SELECT * FROM Book;
+		
+	1.4:
+		CREATE VIEW v1 AS SELECT Bookname, authorname, QTY FROM Book;
+		
+		
+		CREATE TRIGGER t4
+		ON v1
+		INSTEAD OF INSERT 
+		AS
+		BEGIN
+			DECLARE @QTY_var INT
+			SELECT @QTY_var = INSERTED.QTY FROM INSERTED
+
+			IF @QTY_var < 1000
+				INSERT INTO	v1 (Bookname, authorname, QTY) 
+				SELECT inserted.Bookname, inserted.authorname, 1000
+				FROM inserted
+			ELSE
+				INSERT INTO	Book (Bookname, authorname, QTY) 
+				SELECT inserted.Bookname, inserted.authorname, inserted.QTY
+				FROM inserted
+		END
+		
+	1.5:
+		create trigger t5
+		on database
+		for drop_table
+		as
+		begin
+			DECLARE @EventData XML = EVENTDATA();
+			DECLARE @table_name sysname =  @EventData.value('(/EVENT_INSTANCE/ObjectName)[1]',  'NVARCHAR(255)');
+
+			IF @table_name = 'Book'
+				RAISERROR ('you can not drop table Book', 16, 1)  
+				ROLLBACK    
+		end
+		
+		DROP TABLE Book;

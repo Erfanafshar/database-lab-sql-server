@@ -1,0 +1,114 @@
+0:
+	CREATE DATABASE AZ_DB_3;
+	
+1:
+	1.0:
+		CREATE TABLE persons(
+			P_ID INT,
+			LastName VARCHAR(20),
+			FirstName VARCHAR(20),
+			p_Adress VARCHAR(30),
+			city VARCHAR(20),
+			PRIMARY KEY(FirstName, LastName)
+		);
+
+		INSERT INTO persons VALUES(1, 'Hansen', 'Ola', 'Timoteivn 10', 'Sandnes');
+		INSERT INTO persons VALUES(2, 'Svendson', 'Tove', 'Borgvn 23', 'Sandnes');
+		INSERT INTO persons VALUES(3, 'Pettersen', 'Kari', 'Storgt 20', 'Stavanger');
+		INSERT INTO persons VALUES(4, 'Nilsen', 'Tom', 'Vingvn 23', 'Stavanger');
+
+	1.1:
+		SELECT * 
+		FROM persons
+		ORDER BY LastName;
+	
+	1.2:
+		DECLARE @TransName VARCHAR(20);  
+		SELECT @TransName = 'trans1';  
+		  
+		BEGIN TRANSACTION @TransName;  
+		ALTER TABLE persons
+		ADD phoneNumber NVARCHAR(30) CHECK (phoneNumber LIKE '001%');
+		COMMIT TRANSACTION @TransName;
+
+		UPDATE persons SET phoneNumber = '00122231804' WHERE LastName = 'Hansen' AND FirstName = 'Ola';
+		UPDATE persons SET phoneNumber = '00112412431' WHERE LastName = 'Svendson' AND FirstName = 'Tove';
+		UPDATE persons SET phoneNumber = '00183483819' WHERE LastName = 'Pettersen' AND FirstName = 'Kari';
+		UPDATE persons SET phoneNumber = '00149493819' WHERE LastName = 'Nilsen' AND FirstName = 'Tom';
+	
+	1.3:
+		this part is deleted
+	
+	1.4:
+		DECLARE @TransName2 VARCHAR(20);  
+		SELECT @TransName2 = 'trans2';  
+				  
+		BEGIN TRANSACTION @TransName2;  
+		INSERT INTO persons VALUES(7, 'Tjessem', 'Jakob', 'Nissestien 67', 'Sandnes', '00112418568');
+
+		SELECT P_ID, LastName, FirstName
+		FROM persons
+		ORDER BY FirstName;
+		COMMIT TRANSACTION @TransName2;
+		
+	1.5:
+		WAITFOR DELAY '00:00:10';  
+
+		SELECT *
+		FROM persons
+		WHERE city LIKE 'S%';
+	
+	1.6:
+		declare @temp int;
+		select @temp = P_ID FROM persons ORDER BY P_ID;
+
+		while @temp > 0
+		begin
+			print 'okey';
+			set @temp = @temp - 1 ;
+		end
+	
+	1.7:
+		declare @newPhoneNumber NVARCHAR(30);
+		set @newPhoneNumber = '00112345678';
+
+		declare @lastPhoneNumber NVARCHAR(30);
+		select @lastPhoneNumber = phoneNumber FROM persons WHERE LastName = 'Tjessem';
+
+		if @newPhoneNumber < @lastPhoneNumber 
+			INSERT INTO persons VALUES(6, 'Taylor', 'Jackson', 'Nissestien 87', 'Sandnes', '00112345678');
+		else 
+			INSERT INTO persons VALUES(8, 'Taylor', 'Jackson', 'Nissestien 87', 'Sandnes', '00112345678');
+
+		SELECT * FROM persons;
+
+2:
+	2.0:
+		CREATE TABLE students(
+			s_name VARCHAR(10),
+			student_id INT,
+			grade INT,
+			PRIMARY KEY(student_id)
+		);
+
+		INSERT INTO students VALUES('R1', 8831047, 12);
+		INSERT INTO students VALUES('R2', 8831043, 10);
+		INSERT INTO students VALUES('R3', 8831031, 15);
+		INSERT INTO students VALUES('R4', 8831051, 16);
+		INSERT INTO students VALUES('R5', 8831012, 11);
+	
+	2.1:
+		declare @tempTable table(
+		s_name VARCHAR(10),
+		student_id INT,
+		old_grade int, 
+		new_grade int);
+
+		update students 
+		set grade = grade + 2
+		output inserted.s_name, inserted.student_id, deleted.grade, inserted.grade
+		into @tempTable 
+		where grade < 15;
+
+		select * from @tempTable;
+	

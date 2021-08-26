@@ -1,0 +1,170 @@
+0:
+	CREATE DATABASE AZ_DB_4;
+
+1:
+	1.0:
+		CREATE TABLE tblstudent(
+			stuID INT,
+			stuName VARCHAR(20),
+			stuGrade REAL,
+			PRIMARY KEY(stuID)
+		);
+
+		INSERT INTO tblstudent VALUES(1, 'Erf', 12.0);
+		INSERT INTO tblstudent VALUES(2, 'Jil', 15.0);
+		INSERT INTO tblstudent VALUES(3, 'Moh', 8.0);
+		INSERT INTO tblstudent VALUES(4, 'Loi', 2.0);
+		INSERT INTO tblstudent VALUES(5, 'Foi', 13.5);
+
+	1.1:
+		CREATE PROCEDURE get_status
+		@stat VARCHAR(20) OUTPUT
+		AS
+		DECLARE @cnt INT;
+		SELECT @cnt = COUNT(*) FROM tblstudent WHERE stuGrade < 10;
+		IF @cnt < 2
+			SET @stat = 'GOOD'
+		ELSE
+			IF	@cnt < 4
+				SET @stat = 'NORMAL'
+			ELSE 
+				SET @stat = 'BAD'
+		
+			
+		DECLARE @out VARCHAR(20);
+		EXEC get_status @stat = @out OUTPUT;
+
+		SELECT @out;
+		
+		INSERT INTO tblstudent VALUES(6, 'Sib', 7.0);
+		INSERT INTO tblstudent VALUES(7, 'Big', 3.5);
+
+2:
+	2.1:
+		INSERT INTO tblstudent VALUES(8, 'Mos', 9.1);
+		INSERT INTO tblstudent VALUES(9, 'Lot', 9.6);
+		INSERT INTO tblstudent VALUES(10, 'Lot', 9.9);
+		
+		
+		CREATE PROCEDURE change_grades
+		@num INT
+		AS
+		DECLARE @cnt INT;
+		SELECT @cnt = COUNT(*) FROM tblstudent WHERE stuGrade < 10;
+		IF @cnt < @num
+			update tblStudent 
+			set stuGrade = stuGrade + 1
+			where stuGrade < 10 AND stuGrade > 9;
+		ELSE
+			update tblStudent 
+			set stuGrade = stuGrade + 0.5
+			where stuGrade < 10 AND stuGrade > 9.5;
+
+	2.2:
+		SELECT * FROM tblstudent;
+		EXEC change_grades @num = 3;
+		SELECT * FROM tblstudent;
+		
+3:
+	3.1:
+		CREATE PROCEDURE swap
+		@in1 INT,
+		@in2 INT,
+		@out1 INT OUTPUT,
+		@out2 INT OUTPUT
+		AS
+		DECLARE @temp INT;
+		SET @temp = @in1;
+		SET @in1 = @in2;
+		SET @in2 = @temp;
+
+		SET @out1 = @in1
+		SET @out2 = @in2
+
+	3.2:
+		DECLARE @f INT;
+		DECLARE @l INT;
+
+		EXEC swap 3, 7, @f OUTPUT, @l OUTPUT;
+
+		SELECT @f;
+		SELECT @l;
+
+4:
+	INSERT INTO tblstudent VALUES(9012345, 'ali', 14.0);
+
+	CREATE FUNCTION get_grade(@name VARCHAR(20))
+	RETURNS REAL
+	AS
+	BEGIN
+		DECLARE @grade INT;
+		SELECT @grade = stuGrade FROM tblstudent WHERE stuName=@name;
+		RETURN @grade;
+	END
+
+
+	DECLARE @grd REAL;
+	EXEC @grd = get_grade @name='ali';
+	PRINT @grd;
+
+5:
+	5.1:
+		CREATE TABLE person(
+			FirstName VARCHAR(20),
+			LastName VARCHAR(20),
+			PostalCode INT,
+			PRIMARY KEY(FirstName, LastName)
+		);
+
+		INSERT INTO person VALUES('Michael', 'Blythe', 98027);
+		INSERT INTO person VALUES('Linda', 'Mitchell', 98027);
+		INSERT INTO person VALUES('Jillian', 'Carson', 98027);
+		INSERT INTO person VALUES('Garrett', 'Vargas', 98027);
+		INSERT INTO person VALUES('Tsvi', 'Reiter', 98027);
+
+		INSERT INTO person VALUES('Shu', 'Ito', 98055);
+		INSERT INTO person VALUES('Jose', 'Saraiva', 98055);
+		INSERT INTO person VALUES('David', 'Campbell', 98055);
+		INSERT INTO person VALUES('Tete', 'Mensa-Annan', 98055);
+		INSERT INTO person VALUES('Lynn', 'Tsoflias', 98055);
+		INSERT INTO person VALUES('Rachel', 'Valdez', 98055);
+		INSERT INTO person VALUES('Jae', 'Pak', 98055);
+		INSERT INTO person VALUES('Ranjit', 'Varkey Chudukatil', 98055);
+
+	5.2:
+		SELECT FirstName, LastName, PostalCode,
+		ROW_NUMBER() OVER (ORDER BY PostalCode) AS 'rowNumber',
+		RANK() OVER (ORDER BY PostalCode) AS 'rankNumber',
+		DENSE_RANK() OVER (ORDER BY PostalCode) AS 'denseNumber'
+		FROM person;
+
+6:
+	DECLARE @current_date DATETIME;
+	SET @current_date = GETDATE();
+
+	SELECT @current_date;
+
+	CREATE FUNCTION get_future_time(@cur_time DATETIME)
+	RETURNS INT
+	AS
+	BEGIN
+		DECLARE @n_date DATETIME;
+		SELECT @n_date = DATEADD(day, 4, @cur_time);
+
+		DECLARE @n_day INT;
+		SELECT @n_day =  DATENAME(day, @n_date);
+		RETURN @n_day;
+	END
+
+	DECLARE @res INT;
+	EXEC @res = get_future_time @cur_time=@current_date;
+	PRINT @res;
+		
+7:
+	CREATE FUNCTION get_error(@tmp INT)
+	RETURNS INT
+	AS
+	BEGIN
+		INSERT INTO person VALUES('er', 'af', 7);
+		RETURN 3;
+	END
